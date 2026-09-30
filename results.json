@@ -1,0 +1,94 @@
+{
+  "professor": {
+    "n": 150,
+    "json_valid": 1.0,
+    "overall": {
+      "precision": 1.0,
+      "recall": 0.999,
+      "f1": 0.9995
+    },
+    "fields": {
+      "name": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "birth_date": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "birth_place": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "death_date": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "death_place": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "nationality": {
+        "precision": 1.0,
+        "recall": 0.9925,
+        "f1": 0.9963
+      },
+      "occupations": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    }
+  },
+  "student": {
+    "n": 150,
+    "json_valid": 1.0,
+    "overall": {
+      "precision": 0.9383,
+      "recall": 0.9271,
+      "f1": 0.9327
+    },
+    "fields": {
+      "name": {
+        "precision": 0.9267,
+        "recall": 0.9267,
+        "f1": 0.9267
+      },
+      "birth_date": {
+        "precision": 0.9867,
+        "recall": 0.9933,
+        "f1": 0.99
+      },
+      "birth_place": {
+        "precision": 0.9459,
+        "recall": 0.9459,
+        "f1": 0.9459
+      },
+      "death_date": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "death_place": {
+        "precision": 0.9851,
+        "recall": 0.9565,
+        "f1": 0.9706
+      },
+      "nationality": {
+        "precision": 0.8626,
+        "recall": 0.8433,
+        "f1": 0.8528
+      },
+      "occupations": {
+        "precision": 0.9228,
+        "recall": 0.8964,
+        "f1": 0.9094
+      }
+    }
+  }
+}
