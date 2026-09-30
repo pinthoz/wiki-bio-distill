@@ -22,28 +22,41 @@ class Biography(BaseModel):
         None, description="City or town of death; null if missing"
     )
     nationality: list[str] = Field(
-        default_factory=list, description="Adjectives, e.g. ['português']"
+        default_factory=list, description="List of nationality adjectives as stated in the text"
     )
     occupations: list[str] = Field(
         default_factory=list,
-        description="Main professions or occupations, in the singular",
+        description="List of main professions or occupations, in the singular",
     )
 
 
 SCHEMA = Biography.model_json_schema()
 FIELDS = list(Biography.model_fields)
 
+# Keys the teacher must return, with what goes in each one
+FIELDS_GUIDE = json.dumps(
+    {f: info.description for f, info in Biography.model_fields.items()},
+    ensure_ascii=False,
+    indent=2,
+)
+
 # Detailed prompt: used by the teacher and by the base model (fair baseline)
-SYSTEM_TEACHER = """You are an information extraction system. You read the introduction of a \
+SYSTEM_TEACHER = f"""You are an information extraction system. You read the introduction of a \
 Portuguese-language Wikipedia biography and return the requested data.
+
+Reply with a single JSON object and nothing else: no explanations, no markdown. \
+Use exactly these keys, and no others:
+{FIELDS_GUIDE}
 
 Rules:
 - Use only information stated explicitly in the text. Never invent or infer.
 - Dates in ISO format: YYYY-MM-DD; if only month and year are given, YYYY-MM; if only the year, YYYY.
 - Missing fields: null (missing lists: []).
 - Places: only the city or town, without the country (e.g. "Lisboa", not "Lisboa, Portugal").
+- Nationality: exactly the one stated in the text (a "político brasileiro" is "brasileiro"); \
+[] if the text does not state it.
 - Nationality and occupations: in Portuguese, as in the text, lowercase, singular and masculine \
-(e.g. "português", "escritor", "político")."""
+(e.g. "brasileiro", "francês", "escritor", "político")."""
 
 # Short prompt: the student learns the behavior from the examples, not from long instructions
 SYSTEM_STUDENT = "Extract the biography data as JSON."
