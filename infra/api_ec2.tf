@@ -124,9 +124,10 @@ resource "aws_instance" "api" {
     set -euxo pipefail
     REGION=${data.aws_region.current.region}
 
-    dnf install -y python3.11 python3.11-pip git
+    # Python 3.12, as in the Lambda image: the pinned numpy needs it
+    dnf install -y python3.12 python3.12-pip git
     git clone https://github.com/pinthoz/wiki-bio-distill.git /opt/bertapi
-    python3.11 -m venv /opt/bertapi/venv
+    python3.12 -m venv /opt/bertapi/venv
     /opt/bertapi/venv/bin/pip install -q -r /opt/bertapi/app_bert/requirements.txt
 
     mkdir -p /opt/model
