@@ -28,6 +28,10 @@ ORIGIN_SECRET = os.environ.get("ORIGIN_SECRET", "")
 MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/model/student-q4_k_m.gguf")
 MODEL_NAME = os.path.basename(MODEL_PATH)
 MAX_CHARS = 2000
+# The grammar forces valid JSON, but checking every token against it is slow with Qwen's
+# 151k-token vocabulary. The fine-tuned student writes valid JSON on its own, and the
+# answer is validated against the schema either way
+JSON_GRAMMAR = os.environ.get("JSON_GRAMMAR", "1") != "0"
 
 llm = Llama(model_path=MODEL_PATH, n_ctx=2048, n_threads=os.cpu_count(), verbose=False)
 lock = threading.Lock()  # one generation at a time: a llama.cpp context is not thread-safe
@@ -35,12 +39,10 @@ lock = threading.Lock()  # one generation at a time: a llama.cpp context is not 
 
 def extract(text):
     t0 = time.perf_counter()
+    grammar = {"response_format": {"type": "json_object", "schema": SCHEMA}} if JSON_GRAMMAR else {}
     with lock:
         out = llm.create_chat_completion(
-            messages=messages(text, SYSTEM_STUDENT),
-            temperature=0,
-            max_tokens=300,
-            response_format={"type": "json_object", "schema": SCHEMA},
+            messages=messages(text, SYSTEM_STUDENT), temperature=0, max_tokens=300, **grammar
         )
     ms = round((time.perf_counter() - t0) * 1000)
     data = parse_json(out["choices"][0]["message"]["content"])
@@ -89,5 +91,6 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"listening on :{PORT} with {MODEL_NAME}, {os.cpu_count()} threads", flush=True)
+    print(f"listening on :{PORT} with {MODEL_NAME}, {os.cpu_count()} threads, "
+          f"JSON grammar {'on' if JSON_GRAMMAR else 'off'}", flush=True)
     ThreadingHTTPServer(("0.0.0.0", PORT), Handler).serve_forever()

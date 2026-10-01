@@ -121,6 +121,8 @@
 
   fieldset { border: 0; padding: 0; margin: 0 0 18px; }
   legend { font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; margin-bottom: 8px; padding: 0; }
+  /* two columns, or one when the panel is too narrow */
+  #models { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); column-gap: 16px; }
   .model-option { display: flex; gap: 10px; align-items: baseline; padding: 4px 0; cursor: pointer; }
   .model-option input { accent-color: var(--felt); transform: translateY(1px); }
   .model-option small { color: var(--muted); }
@@ -463,7 +465,7 @@ const MODELS = [
   // Same model on an always-on EC2 server; only exists while infra has ec2_api = true
   { id: "bert-ec2", name: "BERT", note: "on EC2", path: "/extract-bert-ec2", checked: false },
   // The generative student: seconds per request, so one try only (a retry would generate again)
-  { id: "qwen", name: "Qwen", note: "student, on EC2", path: "/extract-qwen", checked: false, attempts: 1 },
+  { id: "qwen", name: "Qwen", note: "on EC2", path: "/extract-qwen", checked: false, attempts: 1 },
 ];
 
 const EXAMPLES = {
@@ -715,6 +717,7 @@ $("legend").innerHTML = Object.entries(TAGS)
 // ---------- calling the API ----------
 async function extract(base, key, model, text, onWait) {
   const attempts = model.attempts ?? 9; // a cold start of the full-precision model can take about a minute
+  let lastStatus = null;
   for (let attempt = 1; attempt <= attempts; attempt++) {
     let res;
     try {
@@ -730,6 +733,7 @@ async function extract(base, key, model, text, onWait) {
     if (res && [401, 403].includes(res.status)) {
       throw new Error("The API key is missing or wrong. Check it and deal again.");
     }
+    lastStatus = res ? res.status : null;
     const retry = !res || [502, 503, 504].includes(res.status);
     if (!retry) {
       const body = await res.json().catch(() => ({}));
@@ -739,9 +743,12 @@ async function extract(base, key, model, text, onWait) {
     onWait(`Waking the model up, try ${attempt + 1} of ${attempts}…`);
     await sleep(8000);
   }
-  throw new Error(attempts > 1
-    ? "The model did not answer. It may still be starting: deal again in a minute."
-    : "The model took too long to answer (over 30 seconds). Try a shorter text.");
+  if (attempts > 1 || lastStatus === 503) {
+    throw new Error("The model did not answer. It may still be starting: deal again in a minute.");
+  }
+  throw new Error(lastStatus === 504
+    ? "The model took too long to answer (over 30 seconds). Try a shorter text."
+    : "The model could not be reached. Deal again in a minute.");
 }
 
 $("form").addEventListener("submit", async (e) => {

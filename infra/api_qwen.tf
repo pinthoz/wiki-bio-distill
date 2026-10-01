@@ -1,7 +1,7 @@
 # The Qwen student (GGUF Q4_K_M) on an EC2 server with llama.cpp: POST /extract-qwen.
 # Same pattern as api_ec2.tf (secret header from API Gateway, API key, SSM instead of SSH).
-# A generative model needs CPU: each request takes seconds. Off by default, and expensive
-# while it is on (a c7i.xlarge is about 0.20 USD an hour, ~140 USD a month):
+# A generative model needs CPU: each request takes seconds. Off by default, and it costs
+# money every hour it is on (a c7i-flex.large is about 0.10 USD an hour, ~70 USD a month):
 #   terraform apply -var bert_image_tag=$TAG -var qwen_api=true    # create
 #   terraform apply -var bert_image_tag=$TAG -var qwen_api=false   # destroy
 
@@ -13,7 +13,15 @@ variable "qwen_api" {
 
 variable "qwen_instance_type" {
   type    = string
-  default = "c7i.xlarge" # 4 vCPUs, 8 GB: llama.cpp uses every core for each request
+  # 2 vCPUs, 4 GB, and eligible on AWS's Free Tier plan, which refuses other types.
+  # On a Paid plan, "c7i.xlarge" (4 vCPUs) answers about twice as fast
+  default = "c7i-flex.large"
+}
+
+variable "qwen_json_grammar" {
+  description = "Force valid JSON with a grammar (slower); off: the student's own JSON, still validated"
+  type        = bool
+  default     = true
 }
 
 resource "aws_iam_role" "api_qwen" {
@@ -99,6 +107,7 @@ resource "aws_instance" "qwen" {
     User=qwenapi
     WorkingDirectory=/opt/qwenapi
     Environment=MODEL_PATH=/opt/model/student-q4_k_m.gguf
+    Environment=JSON_GRAMMAR=${var.qwen_json_grammar ? "1" : "0"}
     Environment=PYTHONPATH=/opt/qwenapi:/opt/qwenapi/app_qwen
     EnvironmentFile=/etc/qwenapi.env
     ExecStart=/opt/qwenapi/venv/bin/python /opt/qwenapi/app_qwen/server.py
