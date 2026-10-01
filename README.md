@@ -33,13 +33,17 @@ Test set: 150 biographies (dataset `v1`).
 
 | Model | Valid JSON | F1 | Precision | Recall | F1 nationality | F1 occupations |
 |---|---|---|---|---|---|---|
-| Teacher, Qwen 7B | 1.000 | 0.9995 | 1.000 | 0.999 | 0.996 | 1.000 |
-| Base Qwen 1.5B, detailed prompt | *pending* | | | | | |
-| **Student Qwen 1.5B + LoRA, fp16** | 1.000 | **0.933** | 0.938 | 0.927 | 0.853 | 0.909 |
-| Student Qwen 1.5B, GGUF Q4_K_M | *pending* | | | | | |
-| **Student BERTimbau, PyTorch** | 1.000 | **0.924** | 0.922 | 0.925 | 0.815 | 0.892 |
-| Student BERTimbau, ONNX fp32 | 1.000 | 0.924 | 0.922 | 0.925 | 0.815 | 0.892 |
-| Student BERTimbau, ONNX int8 weights | 1.000 | 0.924 | 0.922 | 0.925 | 0.815 | 0.892 |
+| Teacher, Qwen 7B | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 |
+| Base Qwen 1.5B, detailed prompt, no training | 0.653 | 0.636 | 0.841 | 0.511 | 0.655 | 0.603 |
+| **Student Qwen 1.5B + LoRA, fp16** | 1.000 | **0.932** | 0.938 | 0.926 | 0.855 | 0.909 |
+| Student Qwen 1.5B, GGUF Q4_K_M, JSON grammar | 1.000 | 0.934 | 0.936 | 0.933 | 0.877 | 0.904 |
+| **Student BERTimbau, PyTorch** | 1.000 | **0.924** | 0.922 | 0.926 | 0.818 | 0.892 |
+| Student BERTimbau, ONNX fp32 | 1.000 | 0.924 | 0.922 | 0.926 | 0.818 | 0.892 |
+| Student BERTimbau, ONNX int8 weights | 1.000 | 0.924 | 0.922 | 0.926 | 0.818 | 0.892 |
+
+**Fine-tuning is what makes the small model useful.** With the teacher's full prompt and no training, the base 1.5B returns valid JSON only 65% of the time and misses half of the information (recall 0.511). After QLoRA, the same model returns valid JSON every time and reaches 0.932 F1, with a one-line prompt.
+
+**4-bit quantization costs nothing here.** The GGUF Q4_K_M student (940 MB, against 3.1 GB in fp16) scores 0.934 F1, within noise of the fp16 model, with JSON guaranteed by a grammar built from the schema. It is slow on a laptop CPU, though: a median of 11.9 s per biography with llama.cpp, against 29 ms for the BERT on a laptop GPU and about 65 ms for the BERT on Lambda. That is why the BERT is the one serving the API.
 
 **Read the teacher row with care.** The gold labels were accepted from the teacher without manual review (`review.py --accept-all`), so the test measures agreement with the teacher, not correctness: the teacher scores ~1.0 by construction, and its mistakes are not counted against the students. Some of the BERT "errors" are cases where BERT is right and the teacher is not (a nationality the text never states, a country left in a place name). Reviewing the gold set by hand is the main open item.
 
@@ -91,7 +95,7 @@ Ten requests per route from a laptop in Portugal to `eu-west-1`, through API Gat
 |---|---|
 | `common.py` | Schema (pydantic), prompts, JSON parsing and metrics, shared by every step |
 | `collect.py`, `label_local.py`, `review.py`, `split.py` | Data: collect, label, gold set, split |
-| `gen.py`, `evaluate.py` | Batched generation with timing; comparison table against the gold set |
+| `gen.py`, `evaluate.py`, `eval_gguf.py` | Batched generation with timing; comparison table against the gold set; the GGUF student on CPU |
 | `train_qlora.py` | QLoRA training as a script, with checkpoints synced to S3 (for EC2 Spot) |
 | `bert_data.py`, `bert_train.py` | JSON ↔ spans alignment; BERT training, evaluation and ONNX export |
 | `notebook/` | Colab notebooks: `01_label_teacher` (teacher, gold set, split), `train` (baseline, QLoRA, evaluation, GGUF) |

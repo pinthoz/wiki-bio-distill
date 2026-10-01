@@ -9,6 +9,8 @@ Usage: python bert_train.py
 import argparse
 import glob
 import json
+import os
+import shutil
 import subprocess
 import sys
 import time
@@ -103,8 +105,15 @@ def train(args, tokenizer):
         eval_dataset=tok_data["validation"],
         data_collator=DataCollatorForTokenClassification(tokenizer),
     )
-    resume = bool(glob.glob(f"{args.out}/checkpoint-*"))  # resume an interrupted run
-    trainer.train(resume_from_checkpoint=resume)
+    checkpoints = glob.glob(f"{args.out}/checkpoint-*")
+    if checkpoints and args.fresh:
+        for c in checkpoints:
+            shutil.rmtree(c)
+        checkpoints = []
+    if checkpoints:  # resume an interrupted run; a finished one is not trained again
+        print(f"resuming from {max(checkpoints, key=os.path.getmtime)}: "
+              "a finished run is only re-evaluated (use --fresh to train from scratch)")
+    trainer.train(resume_from_checkpoint=bool(checkpoints))
     trainer.save_model(f"{args.out}/best")
     tokenizer.save_pretrained(f"{args.out}/best")
     return model
@@ -309,6 +318,9 @@ def main():
     ap.add_argument("--batch-size", type=int, default=16)
     ap.add_argument(
         "--export-only", action="store_true", help="skip training; export <out>/best"
+    )
+    ap.add_argument(
+        "--fresh", action="store_true", help="delete old checkpoints and train from scratch"
     )
     args = ap.parse_args()
     print("GPU:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "none")
