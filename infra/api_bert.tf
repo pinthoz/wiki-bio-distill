@@ -118,7 +118,7 @@ resource "aws_apigatewayv2_api" "http" {
   cors_configuration {
     allow_origins = var.cors_origins
     allow_methods = ["POST", "OPTIONS"]
-    allow_headers = ["content-type"]
+    allow_headers = ["content-type", "x-api-key"]
   }
 }
 
@@ -136,11 +136,14 @@ resource "aws_apigatewayv2_integration" "bert" {
   payload_format_version = "2.0"
 }
 
+# Every route requires the x-api-key header (see auth.tf)
 resource "aws_apigatewayv2_route" "bert" {
-  for_each  = local.bert_models
-  api_id    = aws_apigatewayv2_api.http.id
-  route_key = each.value.route
-  target    = "integrations/${aws_apigatewayv2_integration.bert[each.key].id}"
+  for_each           = local.bert_models
+  api_id             = aws_apigatewayv2_api.http.id
+  route_key          = each.value.route
+  target             = "integrations/${aws_apigatewayv2_integration.bert[each.key].id}"
+  authorization_type = "CUSTOM"
+  authorizer_id      = aws_apigatewayv2_authorizer.api_key.id
 }
 
 # These used to be single resources: rename them in the state instead of re-creating them
@@ -170,7 +173,7 @@ resource "aws_apigatewayv2_stage" "default" {
   name        = "$default"
   auto_deploy = true
 
-  # The API has no key: a low request limit protects your credits
+  # Limiting requests protects your credits, even with an API key
   default_route_settings {
     throttling_burst_limit = 5
     throttling_rate_limit  = 2

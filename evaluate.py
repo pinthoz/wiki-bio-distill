@@ -19,7 +19,7 @@ def load_preds(path):
 def main():
     test = [json.loads(l) for l in open("data/test.jsonl", encoding="utf-8")]
     golds = [t["gold"] for t in test]
-    results = {"professor": evaluate([t["teacher"] for t in test], golds)}
+    results = {"teacher": evaluate([t["teacher"] for t in test], golds)}
     latency = {}
     for path in sys.argv[1:]:
         name = path.split("/")[-1].removesuffix(".jsonl")
@@ -36,18 +36,18 @@ def main():
             latency[name] = (ms[len(ms) // 2], ms[int(len(ms) * 0.95) - 1])
 
     names = list(results)
-    print(f"{'métrica':<22}" + "".join(f"{n:>14}" for n in names))
+    print(f"{'metric':<22}" + "".join(f"{n:>14}" for n in names))
     rows = [
-        ("JSON válido", lambda r: r["json_valid"]),
-        ("F1 global", lambda r: r["overall"]["f1"]),
-        ("precisão global", lambda r: r["overall"]["precision"]),
-        ("recall global", lambda r: r["overall"]["recall"]),
+        ("valid JSON", lambda r: r["json_valid"]),
+        ("overall F1", lambda r: r["overall"]["f1"]),
+        ("overall precision", lambda r: r["overall"]["precision"]),
+        ("overall recall", lambda r: r["overall"]["recall"]),
     ]
     rows += [(f"F1 {f}", lambda r, f=f: r["fields"][f]["f1"]) for f in FIELDS]
     for label, get in rows:
         print(f"{label:<22}" + "".join(f"{get(results[n]):>14.3f}" for n in names))
     for n, (p50, p95) in latency.items():
-        print(f"latência {n}: p50={p50} ms  p95={p95} ms")
+        print(f"latency {n}: p50={p50} ms  p95={p95} ms")
     json.dump(results, open("results.json", "w"), indent=2, ensure_ascii=False)
 
 

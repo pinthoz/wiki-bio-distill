@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bio Cards</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%20%3Cg%20transform%3D%22rotate%28-14%2026%2032%29%22%3E%3Crect%20x%3D%229%22%20y%3D%2210%22%20width%3D%2230%22%20height%3D%2242%22%20rx%3D%224%22%20fill%3D%22%23c2418c%22/%3E%3Crect%20x%3D%2212%22%20y%3D%2213%22%20width%3D%2224%22%20height%3D%2236%22%20rx%3D%222%22%20fill%3D%22none%22%20stroke%3D%22%23f6d2e5%22%20stroke-width%3D%221.5%22/%3E%3C/g%3E%20%3Cg%20transform%3D%22rotate%289%2038%2032%29%22%3E%20%3Crect%20x%3D%2222%22%20y%3D%229%22%20width%3D%2232%22%20height%3D%2245%22%20rx%3D%224%22%20fill%3D%22%23e3b341%22/%3E%20%3Crect%20x%3D%2225%22%20y%3D%2212%22%20width%3D%2226%22%20height%3D%2239%22%20rx%3D%222%22%20fill%3D%22%23fbf7ec%22/%3E%20%3Crect%20x%3D%2227%22%20y%3D%2214%22%20width%3D%2222%22%20height%3D%2217%22%20rx%3D%221.5%22%20fill%3D%22%233e6fd8%22/%3E%20%3Ccircle%20cx%3D%2238%22%20cy%3D%2221%22%20r%3D%224%22%20fill%3D%22%23fbf7ec%22/%3E%20%3Cpath%20d%3D%22M30%2031a8%206.5%200%200%201%2016%200z%22%20fill%3D%22%23fbf7ec%22/%3E%20%3Ccircle%20cx%3D%2229.5%22%20cy%3D%2236%22%20r%3D%221.6%22%20fill%3D%22%23c2418c%22/%3E%3Crect%20x%3D%2233%22%20y%3D%2235%22%20width%3D%2213%22%20height%3D%222%22%20rx%3D%221%22%20fill%3D%22%231c1a17%22%20opacity%3D%22.55%22/%3E%20%3Ccircle%20cx%3D%2229.5%22%20cy%3D%2241.5%22%20r%3D%221.6%22%20fill%3D%22%23c2418c%22/%3E%3Crect%20x%3D%2233%22%20y%3D%2240.5%22%20width%3D%229%22%20height%3D%222%22%20rx%3D%221%22%20fill%3D%22%231c1a17%22%20opacity%3D%22.55%22/%3E%20%3Crect%20x%3D%2227%22%20y%3D%2246%22%20width%3D%2222%22%20height%3D%222.5%22%20rx%3D%221.25%22%20fill%3D%22%23e3b341%22/%3E%20%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Gabarito:wght@600;800&display=swap" rel="stylesheet">
@@ -50,6 +51,9 @@
     padding: 40px 24px 64px;
   }
 
+  .brand { display: flex; align-items: center; gap: 14px; margin: 0 0 12px; }
+  .brand svg { width: clamp(52px, 8vw, 72px); height: auto; flex: none; filter: drop-shadow(0 4px 8px rgba(5, 15, 25, .45)); }
+  .brand h1 { margin: 0; }
   header h1 {
     font-family: var(--font-display);
     font-weight: 800;
@@ -150,6 +154,18 @@
     color: var(--ink);
   }
   details.settings p { margin: 6px 0 0; overflow-wrap: anywhere; }
+  .key-field { margin: 0 0 18px; }
+  .key-field input {
+    width: 100%;
+    font: inherit;
+    font-size: .9rem;
+    padding: 7px 10px;
+    border: 1.5px solid #d9d2bf;
+    border-radius: 8px;
+    color: var(--ink);
+    background: #fff;
+  }
+  .key-field p { margin: 6px 0 0; font-size: .85rem; color: var(--muted); }
   .form-error { color: var(--danger); font-size: .9rem; margin: 10px 0 0; min-height: 1.2em; }
 
   /* ---------- the card table ---------- */
@@ -370,6 +386,9 @@
   mark[class^="tag-"] { background: color-mix(in srgb, var(--c) 18%, transparent); border-color: var(--c); }
   .legend i[class^="tag-"] { background: var(--c); }
 
+  /* ---------- stack line ---------- */
+  .stack { margin-top: 48px; text-align: center; font-size: .9rem; color: var(--on-felt-muted); }
+
   @media (max-width: 860px) {
     .table { grid-template-columns: minmax(0, 1fr); }
     .page { padding: 28px 16px 48px; }
@@ -384,7 +403,10 @@
 <body>
 <div class="page">
   <header>
-    <h1>Bio Cards</h1>
+    <div class="brand">
+      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"> <g transform="rotate(-14 26 32)"><rect x="9" y="10" width="30" height="42" rx="4" fill="#c2418c"/><rect x="12" y="13" width="24" height="36" rx="2" fill="none" stroke="#f6d2e5" stroke-width="1.5"/></g> <g transform="rotate(9 38 32)"> <rect x="22" y="9" width="32" height="45" rx="4" fill="#e3b341"/> <rect x="25" y="12" width="26" height="39" rx="2" fill="#fbf7ec"/> <rect x="27" y="14" width="22" height="17" rx="1.5" fill="#3e6fd8"/> <circle cx="38" cy="21" r="4" fill="#fbf7ec"/> <path d="M30 31a8 6.5 0 0 1 16 0z" fill="#fbf7ec"/> <circle cx="29.5" cy="36" r="1.6" fill="#c2418c"/><rect x="33" y="35" width="13" height="2" rx="1" fill="#1c1a17" opacity=".55"/> <circle cx="29.5" cy="41.5" r="1.6" fill="#c2418c"/><rect x="33" y="40.5" width="9" height="2" rx="1" fill="#1c1a17" opacity=".55"/> <rect x="27" y="46" width="22" height="2.5" rx="1.25" fill="#e3b341"/> </g></svg>
+      <h1>Bio Cards</h1>
+    </div>
     <p>Paste the opening of a Portuguese Wikipedia biography. Each model deals you a card with what it found in the text.</p>
   </header>
 
@@ -398,6 +420,12 @@
         <legend>Models</legend>
         <div id="models"></div>
       </fieldset>
+
+      <div class="key-field">
+        <label class="field-title" for="key">API key</label>
+        <input id="key" type="password" autocomplete="off" spellcheck="false">
+        <p>Saved in this browser only. Ask the owner of this page for a key.</p>
+      </div>
 
       <button class="deal" id="deal" type="submit">Deal cards</button>
       <p class="form-error" id="form-error" role="alert"></p>
@@ -424,18 +452,24 @@
       </section>
     </section>
   </main>
+
+  <footer class="stack">BERTimbau token classifier → ONNX (fp32 + int8 weights) → AWS Lambda · API Gateway + API key · S3 + CloudFront · Terraform</footer>
 </div>
 
 <script>
 const MODELS = [
   { id: "bert", name: "BERT", note: "full precision", path: "/extract-bert", checked: true },
   { id: "bert-quant", name: "BERT", note: "quantized", path: "/extract-bert-quant", checked: true },
+  // Same model on an always-on EC2 server; only exists while infra has ec2_api = true
+  { id: "bert-ec2", name: "BERT", note: "on EC2", path: "/extract-bert-ec2", checked: false },
 ];
 
 const EXAMPLES = {
   "Amália Rodrigues": "Amália da Piedade Rebordão Rodrigues (Lisboa, 23 de julho de 1920 — Lisboa, 6 de outubro de 1999) foi uma fadista, cantora e atriz portuguesa.",
   "José Saramago": "José de Sousa Saramago (Azinhaga, 16 de novembro de 1922 — Tías, 18 de junho de 2010) foi um escritor, jornalista, dramaturgo e poeta português.",
   "Eusébio": "Eusébio da Silva Ferreira (Lourenço Marques, 25 de janeiro de 1942 — Lisboa, 5 de janeiro de 2014) foi um futebolista português, nascido em Moçambique.",
+  // The one test biography where the two BERT models disagree (place of death)
+  "Joan Bodon": "Joan Bodon, ou Jean Boudou em francês, (Crespin, 11 de dezembro de 1920, Larbatache, Argélia, 24 de fevereiro de 1975) foi um novelista francês de língua occitana.",
 };
 
 const TAGS = {
@@ -490,8 +524,13 @@ for (const m of MODELS) {
   $("models").append(row);
 }
 const params = new URLSearchParams(location.search);
+// Hosted on CloudFront, the API lives on the same domain (/extract-*): nothing to set.
+// Opened from disk, the page needs the API Gateway address (or ?api=... in the URL)
+const HOSTED = location.protocol === "https:" || location.protocol === "http:";
 $("api").value = params.get("api") || load("bio-cards-api");
-if (!$("api").value) $("settings").open = true;
+if (HOSTED && !params.get("api")) $("settings").hidden = true;
+else if (!$("api").value) $("settings").open = true;
+$("key").value = load("bio-cards-key");
 $("api").addEventListener("change", () => store("bio-cards-api", $("api").value.trim()));
 
 // ---------- helpers for the card ----------
@@ -672,20 +711,23 @@ $("legend").innerHTML = Object.entries(TAGS)
   .map(([tag, label]) => `<span><i class="tag-${tag}"></i>${label}</span>`).join("");
 
 // ---------- calling the API ----------
-async function extract(base, model, text, onWait) {
+async function extract(base, key, model, text, onWait) {
   const attempts = 9; // a cold start of the full-precision model can take about a minute
   for (let attempt = 1; attempt <= attempts; attempt++) {
     let res;
     try {
       res = await fetch(base + model.path, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", "x-api-key": key },
         body: JSON.stringify({ text }),
       });
     } catch {
       res = null; // network or CORS failure, often a cold start timing out
     }
     if (res?.ok) return res.json();
+    if (res && [401, 403].includes(res.status)) {
+      throw new Error("The API key is missing or wrong. Check it and deal again.");
+    }
     const retry = !res || [502, 503, 504].includes(res.status);
     if (!retry) {
       const body = await res.json().catch(() => ({}));
@@ -701,14 +743,17 @@ async function extract(base, model, text, onWait) {
 $("form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const text = $("text").value.trim();
-  const base = $("api").value.trim().replace(/\/+$/, "");
+  const base = (params.get("api") || (HOSTED ? location.origin : $("api").value.trim())).replace(/\/+$/, "");
+  const key = $("key").value.trim();
   const chosen = MODELS.filter((m) => $("models").querySelector(`input[value="${m.id}"]`).checked);
   $("form-error").textContent = "";
 
   if (!text) { $("form-error").textContent = "Paste a biography first, or pick one of the examples."; return; }
   if (!base) { $("form-error").textContent = "Add the API address below first."; $("settings").open = true; $("api").focus(); return; }
+  if (!key) { $("form-error").textContent = "Add your API key first."; $("key").focus(); return; }
   if (!chosen.length) { $("form-error").textContent = "Pick at least one model."; return; }
-  store("bio-cards-api", base);
+  store("bio-cards-key", key);
+  if (!HOSTED) store("bio-cards-api", base);
 
   $("deal").disabled = true;
   $("hand").innerHTML = "";
@@ -722,7 +767,7 @@ $("form").addEventListener("submit", async (e) => {
     const wrap = slot.querySelector(".card-wrap");
     const back = slot.querySelector(".card-back");
     try {
-      const result = await extract(base, model, text, (msg) => { back.querySelector("p").textContent = msg; });
+      const result = await extract(base, key, model, text, (msg) => { back.querySelector("p").textContent = msg; });
       renderFront(slot.querySelector(".card"), result.data, text, result, model);
       addTilt(wrap);
       requestAnimationFrame(() => wrap.classList.remove("face-down"));
