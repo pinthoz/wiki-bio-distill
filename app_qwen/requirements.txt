@@ -1,0 +1,2 @@
+llama-cpp-python
+pydantic>=2,<3

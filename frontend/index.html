@@ -453,7 +453,7 @@
     </section>
   </main>
 
-  <footer class="stack">BERTimbau token classifier → ONNX (fp32 + int8 weights) → AWS Lambda · API Gateway + API key · S3 + CloudFront · Terraform</footer>
+  <footer class="stack">BERTimbau token classifier → ONNX (fp32 + int8 weights) → AWS Lambda · Qwen 1.5B QLoRA student → GGUF Q4 → llama.cpp on EC2 · API Gateway + API key · S3 + CloudFront · Terraform</footer>
 </div>
 
 <script>
@@ -462,6 +462,8 @@ const MODELS = [
   { id: "bert-quant", name: "BERT", note: "quantized", path: "/extract-bert-quant", checked: true },
   // Same model on an always-on EC2 server; only exists while infra has ec2_api = true
   { id: "bert-ec2", name: "BERT", note: "on EC2", path: "/extract-bert-ec2", checked: false },
+  // The generative student: seconds per request, so one try only (a retry would generate again)
+  { id: "qwen", name: "Qwen", note: "student, on EC2", path: "/extract-qwen", checked: false, attempts: 1 },
 ];
 
 const EXAMPLES = {
@@ -712,7 +714,7 @@ $("legend").innerHTML = Object.entries(TAGS)
 
 // ---------- calling the API ----------
 async function extract(base, key, model, text, onWait) {
-  const attempts = 9; // a cold start of the full-precision model can take about a minute
+  const attempts = model.attempts ?? 9; // a cold start of the full-precision model can take about a minute
   for (let attempt = 1; attempt <= attempts; attempt++) {
     let res;
     try {
@@ -737,7 +739,9 @@ async function extract(base, key, model, text, onWait) {
     onWait(`Waking the model up, try ${attempt + 1} of ${attempts}…`);
     await sleep(8000);
   }
-  throw new Error("The model did not answer. It may still be starting: deal again in a minute.");
+  throw new Error(attempts > 1
+    ? "The model did not answer. It may still be starting: deal again in a minute."
+    : "The model took too long to answer (over 30 seconds). Try a shorter text.");
 }
 
 $("form").addEventListener("submit", async (e) => {
