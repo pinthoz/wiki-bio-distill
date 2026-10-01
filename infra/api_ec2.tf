@@ -135,9 +135,12 @@ resource "aws_instance" "api" {
       aws s3 cp "s3://${aws_s3_bucket.data.id}/v1/models/bert-token/$f" /opt/model/ --region "$REGION"
     done
 
+    set +x  # keep the secret out of /var/log/cloud-init-output.log
     SECRET=$(aws ssm get-parameter --name "${aws_ssm_parameter.origin_secret.name}" \
       --with-decryption --query Parameter.Value --output text --region "$REGION")
     printf 'ORIGIN_SECRET=%s\n' "$SECRET" > /etc/bertapi.env
+    unset SECRET
+    set -x
     chmod 600 /etc/bertapi.env
 
     useradd --system --no-create-home bertapi || true

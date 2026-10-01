@@ -92,9 +92,12 @@ resource "aws_instance" "qwen" {
     mkdir -p /opt/model
     aws s3 cp "s3://${aws_s3_bucket.data.id}/v1/models/qwen1.5b-lora-r16/student-q4_k_m.gguf" /opt/model/ --region "$REGION"
 
+    set +x  # keep the secret out of /var/log/cloud-init-output.log
     SECRET=$(aws ssm get-parameter --name "${aws_ssm_parameter.origin_secret.name}" \
       --with-decryption --query Parameter.Value --output text --region "$REGION")
     printf 'ORIGIN_SECRET=%s\n' "$SECRET" > /etc/qwenapi.env
+    unset SECRET
+    set -x
     chmod 600 /etc/qwenapi.env
 
     useradd --system --no-create-home qwenapi || true
