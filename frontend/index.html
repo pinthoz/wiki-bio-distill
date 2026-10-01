@@ -1,0 +1,739 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bio Cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Gabarito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --felt: #1f3b4d;
+    --felt-deep: #132532;
+    --gold: #e3b341;
+    --gold-deep: #a97c17;
+    --paper: #fbf7ec;
+    --ink: #1c1a17;
+    --muted: #5b5850;
+    --on-felt: #e8eef2;
+    --on-felt-muted: #a9bccb;
+    --danger: #b23a3a;
+    --radius-card: 16px;
+    --font-display: "Gabarito", system-ui, sans-serif;
+    --font-body: "Atkinson Hyperlegible", system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--on-felt);
+    background-color: var(--felt);
+    /* a playmat: soft felt texture and a vignette */
+    background-image:
+      radial-gradient(ellipse at 50% 20%, rgba(255,255,255,.07), transparent 60%),
+      radial-gradient(ellipse at 50% 120%, var(--felt-deep), transparent 70%),
+      repeating-radial-gradient(circle at 30% 40%, rgba(255,255,255,.012) 0 1px, transparent 1px 3px);
+    background-attachment: fixed;
+  }
+
+  :focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px 64px;
+  }
+
+  header h1 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    line-height: 1;
+    margin: 0 0 12px;
+    color: var(--gold);
+    letter-spacing: -.01em;
+    text-shadow: 0 2px 0 var(--gold-deep);
+  }
+  header p {
+    margin: 0 0 32px;
+    max-width: 60ch;
+    color: var(--on-felt-muted);
+    font-size: 1.05rem;
+  }
+
+  .table {
+    display: grid;
+    grid-template-columns: minmax(280px, 380px) 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  /* ---------- input panel ---------- */
+  .panel {
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(5, 15, 25, .45);
+  }
+  .panel label.field-title {
+    display: block;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin-bottom: 8px;
+  }
+  textarea {
+    width: 100%;
+    min-height: 170px;
+    resize: vertical;
+    font: inherit;
+    font-size: .95rem;
+    color: var(--ink);
+    background: #fff;
+    border: 1.5px solid #d9d2bf;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .examples { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 18px; }
+  .examples span { font-size: .85rem; color: var(--muted); width: 100%; }
+  .chip {
+    font: inherit;
+    font-size: .85rem;
+    border: 1.5px solid #d9d2bf;
+    background: transparent;
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 3px 12px;
+    cursor: pointer;
+  }
+  .chip:hover { border-color: var(--gold-deep); }
+
+  fieldset { border: 0; padding: 0; margin: 0 0 18px; }
+  legend { font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; margin-bottom: 8px; padding: 0; }
+  .model-option { display: flex; gap: 10px; align-items: baseline; padding: 4px 0; cursor: pointer; }
+  .model-option input { accent-color: var(--felt); transform: translateY(1px); }
+  .model-option small { color: var(--muted); }
+
+  .deal {
+    width: 100%;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.15rem;
+    color: var(--ink);
+    background: var(--gold);
+    border: 0;
+    border-bottom: 4px solid var(--gold-deep);
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+  }
+  .deal:active { transform: translateY(2px); border-bottom-width: 2px; }
+  .deal:disabled { opacity: .6; cursor: progress; }
+
+  details.settings { margin-top: 16px; font-size: .9rem; color: var(--muted); }
+  details.settings summary { cursor: pointer; }
+  details.settings input {
+    width: 100%;
+    margin-top: 8px;
+    font: inherit;
+    font-size: .85rem;
+    padding: 6px 8px;
+    border: 1.5px solid #d9d2bf;
+    border-radius: 6px;
+    color: var(--ink);
+  }
+  details.settings p { margin: 6px 0 0; overflow-wrap: anywhere; }
+  .form-error { color: var(--danger); font-size: .9rem; margin: 10px 0 0; min-height: 1.2em; }
+
+  /* ---------- the card table ---------- */
+  .stage { min-width: 0; }
+  .hand {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    justify-content: center;
+    perspective: 1200px;
+  }
+  .empty-hand {
+    width: 100%;
+    border: 2px dashed rgba(169, 188, 203, .35);
+    border-radius: var(--radius-card);
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--on-felt-muted);
+  }
+
+  .slot { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .slot-caption { font-size: .9rem; color: var(--on-felt-muted); }
+  .slot-caption b { color: var(--on-felt); font-family: var(--font-display); font-weight: 600; }
+
+  .card-wrap {
+    width: min(300px, 82vw);
+    aspect-ratio: 63 / 88;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform .7s cubic-bezier(.2, .8, .2, 1);
+  }
+  .card-wrap.face-down { transform: rotateY(180deg); }
+  .card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: var(--radius-card);
+  }
+
+  /* back of the card: shown while the model is working */
+  .card-back {
+    transform: rotateY(180deg);
+    background:
+      radial-gradient(circle at 50% 50%, var(--gold) 0 18%, var(--gold-deep) 18% 21%, transparent 21%),
+      repeating-linear-gradient(45deg, #24506a 0 10px, #1d4258 10px 20px);
+    border: 10px solid var(--gold);
+    box-shadow: 0 18px 40px rgba(5, 15, 25, .55);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 18px;
+  }
+  .card-back p {
+    margin: 0;
+    background: rgba(19, 37, 50, .85);
+    color: var(--on-felt);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: .85rem;
+    text-align: center;
+  }
+  .card-back.error p { background: var(--paper); color: var(--danger); }
+
+  /* front of the card */
+  .card {
+    --type: #8a8f98;
+    --type-light: #d9dbe0;
+    background: var(--gold);
+    padding: 10px;
+    box-shadow: 0 18px 40px rgba(5, 15, 25, .55);
+    color: var(--ink);
+    overflow: hidden;
+  }
+  .card-inner {
+    height: 100%;
+    border-radius: 9px;
+    padding: 10px 12px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    background:
+      linear-gradient(160deg, var(--type-light), var(--type) 140%);
+  }
+  .card-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .card-name {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.05rem;
+    line-height: 1.1;
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+  .card-lv { font-family: var(--font-display); font-weight: 800; white-space: nowrap; color: var(--danger); }
+  .card-lv small { font-size: .65rem; font-weight: 600; color: var(--ink); margin-right: 2px; }
+
+  .card-art {
+    position: relative;
+    flex: 0 0 auto;
+    aspect-ratio: 2 / 1;
+    border: 4px solid var(--gold);
+    border-radius: 4px;
+    box-shadow: inset 0 0 0 1px var(--gold-deep), 0 2px 0 var(--gold-deep);
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 70% 25%, rgba(255,255,255,.55), transparent 45%),
+      linear-gradient(135deg, var(--type-light), var(--type));
+    display: grid;
+    place-items: center;
+  }
+  .card-art .monogram {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 3.4rem;
+    color: rgba(255,255,255,.9);
+    text-shadow: 0 3px 0 rgba(0,0,0,.18);
+  }
+  .card-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
+  .card-types { position: absolute; left: 6px; bottom: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .type-chip {
+    font-size: .68rem;
+    font-weight: 700;
+    background: var(--paper);
+    border-radius: 999px;
+    padding: 1px 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.25);
+  }
+
+  .card-strip {
+    font-size: .7rem;
+    line-height: 1.35;
+    background: linear-gradient(90deg, var(--gold), #f3d98a, var(--gold));
+    border-radius: 3px;
+    padding: 3px 8px;
+    font-style: italic;
+  }
+  .card-strip div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .moves { flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; min-height: 0; overflow: hidden; }
+  .move {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 1px 0;
+    border-bottom: 1px solid rgba(28, 26, 23, .18);
+  }
+  .move:last-child { border-bottom: 0; }
+  .pips { display: flex; gap: 2px; }
+  .pip { width: 11px; height: 11px; border-radius: 50%; background: var(--type); border: 1.5px solid var(--paper); box-shadow: 0 0 0 1px rgba(0,0,0,.25); }
+  .move-name { font-family: var(--font-display); font-weight: 600; font-size: .88rem; line-height: 1.3; text-transform: capitalize; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .move-dmg { font-family: var(--font-display); font-weight: 800; font-size: .95rem; line-height: 1.3; }
+  .no-moves { font-size: .8rem; font-style: italic; color: var(--muted); margin: 4px 0; }
+
+  .card-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    text-align: center;
+    font-size: .62rem;
+    line-height: 1.25;
+    border-top: 1.5px solid rgba(28, 26, 23, .35);
+    padding-top: 4px;
+  }
+  .card-stats b { display: block; font-size: .78rem; font-family: var(--font-display); }
+  .card-flavor {
+    font-size: .64rem;
+    line-height: 1.3;
+    font-style: italic;
+    background: rgba(251, 247, 236, .75);
+    border: 1px solid var(--gold-deep);
+    border-radius: 3px;
+    padding: 3px 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 0 0 auto;
+  }
+
+  /* holographic foil, revealed by the pointer */
+  .card .foil {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-card);
+    pointer-events: none;
+    opacity: 0;
+    mix-blend-mode: color-dodge;
+    background:
+      radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,.55), transparent 40%),
+      linear-gradient(115deg, transparent 20%, rgba(255, 0, 128, .25) 35%, rgba(0, 220, 255, .25) 50%, rgba(255, 230, 0, .25) 65%, transparent 80%);
+    background-size: 100% 100%, 250% 250%;
+    background-position: center, var(--fx, 50%) var(--fy, 50%);
+    transition: opacity .25s;
+  }
+  .card-wrap.tilting .foil { opacity: 1; }
+
+  /* ---------- highlighted text ---------- */
+  .reading {
+    margin-top: 40px;
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 12px;
+    padding: 20px 24px;
+    box-shadow: 0 10px 30px rgba(5, 15, 25, .45);
+  }
+  .reading h2 { font-family: var(--font-display); font-weight: 600; font-size: 1.2rem; margin: 0 0 4px; }
+  .reading-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: baseline; }
+  .reading-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .reading-tabs button[aria-pressed="true"] { background: var(--felt); border-color: var(--felt); color: var(--paper); }
+  .reading-text { max-width: 75ch; font-size: 1.02rem; line-height: 1.75; margin: 12px 0 14px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .85rem; color: var(--muted); }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  mark { color: inherit; border-radius: 3px; padding: 0 2px; border-bottom: 2.5px solid; }
+
+  .tag-NAME   { --c: #d39b14; } .tag-BDATE  { --c: #2f80d1; }
+  .tag-BPLACE { --c: #2e9c62; } .tag-DDATE  { --c: #7a5cc9; }
+  .tag-DPLACE { --c: #d0583f; } .tag-NAT    { --c: #138a8a; }
+  .tag-OCC    { --c: #c43f86; }
+  mark[class^="tag-"] { background: color-mix(in srgb, var(--c) 18%, transparent); border-color: var(--c); }
+  .legend i[class^="tag-"] { background: var(--c); }
+
+  @media (max-width: 860px) {
+    .table { grid-template-columns: minmax(0, 1fr); }
+    .page { padding: 28px 16px 48px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card-wrap { transition: none; }
+    .card .foil { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>Bio Cards</h1>
+    <p>Paste the opening of a Portuguese Wikipedia biography. Each model deals you a card with what it found in the text.</p>
+  </header>
+
+  <main class="table">
+    <form class="panel" id="form" novalidate>
+      <label class="field-title" for="text">Biography text</label>
+      <textarea id="text" maxlength="2000" placeholder="Amália da Piedade Rebordão Rodrigues (Lisboa, 23 de julho de 1920 — Lisboa, 6 de outubro de 1999) foi uma fadista…"></textarea>
+      <div class="examples" id="examples"><span>Or try one of these:</span></div>
+
+      <fieldset>
+        <legend>Models</legend>
+        <div id="models"></div>
+      </fieldset>
+
+      <button class="deal" id="deal" type="submit">Deal cards</button>
+      <p class="form-error" id="form-error" role="alert"></p>
+
+      <details class="settings" id="settings">
+        <summary>API address</summary>
+        <input id="api" type="url" placeholder="https://abc123.execute-api.eu-west-1.amazonaws.com" autocomplete="off">
+        <p>Get it with <code>terraform output -raw api_base_url</code> in <code>infra/</code>.</p>
+      </details>
+    </form>
+
+    <section class="stage" aria-live="polite">
+      <div class="hand" id="hand">
+        <div class="empty-hand">Your cards will land here.</div>
+      </div>
+
+      <section class="reading" id="reading" hidden>
+        <div class="reading-head">
+          <h2>Where each value came from</h2>
+          <div class="reading-tabs" id="reading-tabs"></div>
+        </div>
+        <p class="reading-text" id="reading-text"></p>
+        <div class="legend" id="legend"></div>
+      </section>
+    </section>
+  </main>
+</div>
+
+<script>
+const MODELS = [
+  { id: "bert", name: "BERT", note: "full precision", path: "/extract-bert", checked: true },
+  { id: "bert-quant", name: "BERT", note: "quantized", path: "/extract-bert-quant", checked: true },
+];
+
+const EXAMPLES = {
+  "Amália Rodrigues": "Amália da Piedade Rebordão Rodrigues (Lisboa, 23 de julho de 1920 — Lisboa, 6 de outubro de 1999) foi uma fadista, cantora e atriz portuguesa.",
+  "José Saramago": "José de Sousa Saramago (Azinhaga, 16 de novembro de 1922 — Tías, 18 de junho de 2010) foi um escritor, jornalista, dramaturgo e poeta português.",
+  "Eusébio": "Eusébio da Silva Ferreira (Lourenço Marques, 25 de janeiro de 1942 — Lisboa, 5 de janeiro de 2014) foi um futebolista português, nascido em Moçambique.",
+};
+
+const TAGS = {
+  NAME: "Name", BDATE: "Birth date", BPLACE: "Birthplace", DDATE: "Death date",
+  DPLACE: "Place of death", NAT: "Nationality", OCC: "Occupation",
+};
+
+// Card "types", picked from the occupations (Portuguese word stems)
+const TYPES = [
+  { name: "Statecraft", color: "#3e6fd8", light: "#cfdcf7", words: ["polític", "deputad", "president", "ministr", "rei", "rainha", "princes", "príncip", "imperador", "diplomat", "governador", "prefeit", "senador", "vereador"] },
+  { name: "Arts", color: "#c2418c", light: "#f6d2e5", words: ["cant", "fadist", "músic", "ator", "atriz", "artist", "pintor", "escrit", "poet", "compositor", "realizador", "cineast", "dramaturg", "romancist", "jornalist", "apresentador", "bailar", "escultor", "fotógraf"] },
+  { name: "Sport", color: "#e07a1f", light: "#fbe0c6", words: ["futebolist", "jogador", "atleta", "tenist", "ciclist", "nadador", "piloto", "treinador", "basquet", "lutador", "pugilist", "linebacker"] },
+  { name: "Mind", color: "#2e9c78", light: "#cdeee2", words: ["cientist", "físic", "químic", "médic", "matemátic", "engenheir", "filósof", "astronaut", "professor", "investigador", "economist", "historiador", "biólog"] },
+  { name: "Faith", color: "#b8912a", light: "#f3e6bf", words: ["padre", "bispo", "sant", "religios", "papa", "monge", "freira", "cardeal", "missionári"] },
+  { name: "Valor", color: "#b23a3a", light: "#f3cfcf", words: ["militar", "general", "soldad", "almirante", "coronel", "navegador", "explorador"] },
+];
+const NORMAL = { name: "Wanderer", color: "#7d8591", light: "#dde0e5" };
+
+const FLAGS = {
+  "português": "🇵🇹", "brasileiro": "🇧🇷", "francês": "🇫🇷", "espanhol": "🇪🇸", "italiano": "🇮🇹",
+  "alemão": "🇩🇪", "britânico": "🇬🇧", "inglês": "🇬🇧", "norte-americano": "🇺🇸", "estadunidense": "🇺🇸",
+  "japonês": "🇯🇵", "argentino": "🇦🇷", "mexicano": "🇲🇽", "angolano": "🇦🇴", "moçambicano": "🇲🇿",
+  "russo": "🇷🇺", "chinês": "🇨🇳", "canadiano": "🇨🇦", "canadense": "🇨🇦", "iraniano": "🇮🇷",
+};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// localStorage can be missing (private windows, blocked storage): the page works without it
+function store(key, value) {
+  try { localStorage.setItem(key, value); } catch {}
+}
+function load(key) {
+  try { return localStorage.getItem(key) || ""; } catch { return ""; }
+}
+
+// ---------- setup ----------
+for (const [label, text] of Object.entries(EXAMPLES)) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "chip";
+  b.textContent = label;
+  b.addEventListener("click", () => { $("text").value = text; $("text").focus(); });
+  $("examples").append(b);
+}
+for (const m of MODELS) {
+  const row = document.createElement("label");
+  row.className = "model-option";
+  row.innerHTML = `<input type="checkbox" value="${m.id}" ${m.checked ? "checked" : ""}> <span>${esc(m.name)} <small>${esc(m.note)}</small></span>`;
+  $("models").append(row);
+}
+const params = new URLSearchParams(location.search);
+$("api").value = params.get("api") || load("bio-cards-api");
+if (!$("api").value) $("settings").open = true;
+$("api").addEventListener("change", () => store("bio-cards-api", $("api").value.trim()));
+
+// ---------- helpers for the card ----------
+function hash(s) {
+  let h = 2166136261;
+  for (const c of s) h = Math.imul(h ^ c.codePointAt(0), 16777619);
+  return h >>> 0;
+}
+
+function cardType(occupations) {
+  for (const occ of occupations) {
+    const o = occ.toLowerCase();
+    const t = TYPES.find((t) => t.words.some((w) => o.includes(w)));
+    if (t) return t;
+  }
+  return NORMAL;
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function formatDate(iso) {
+  if (!iso) return null;
+  const [y, m, d] = iso.split("-").map(Number);
+  if (d) return `${d} ${MONTHS[m - 1]} ${y}`;
+  if (m) return `${MONTHS[m - 1]} ${y}`;
+  return String(y);
+}
+
+function age(birth, death) {
+  if (!birth) return null;
+  const [by, bm = 0, bd = 0] = birth.split("-").map(Number);
+  let end;
+  if (death) end = death.split("-").map(Number);
+  else { const t = new Date(); end = [t.getFullYear(), t.getMonth() + 1, t.getDate()]; }
+  const [ey, em = 0, ed = 0] = end;
+  let years = ey - by;
+  if (bm && em && (em < bm || (em === bm && bd && ed && ed < bd))) years -= 1;
+  return years >= 0 && years < 130 ? years : null;
+}
+
+function initials(name) {
+  const parts = name.split(/\s+/).filter((p) => /^[\p{Lu}]/u.test(p));
+  return ((parts[0] || name)[0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
+}
+
+function firstSentence(text) {
+  const clean = text.replace(/\s+/g, " ").trim();
+  const end = clean.search(/\.\s/);
+  return end > 0 ? clean.slice(0, end + 1) : clean;
+}
+
+function fieldsFound(d) {
+  return ["name", "birth_date", "birth_place", "death_date", "death_place"].filter((k) => d[k]).length
+    + (d.nationality?.length ? 1 : 0) + (d.occupations?.length ? 1 : 0);
+}
+
+// ---------- rendering ----------
+function slotFor(model) {
+  const slot = document.createElement("div");
+  slot.className = "slot";
+  slot.innerHTML = `
+    <div class="card-wrap face-down">
+      <div class="card-face card-back"><p>Reading the text…</p></div>
+      <div class="card-face card"></div>
+    </div>
+    <div class="slot-caption"><b>${esc(model.name)}</b> ${esc(model.note)}</div>`;
+  return slot;
+}
+
+function renderFront(el, d, text, result, model) {
+  const type = cardType(d.occupations || []);
+  el.style.setProperty("--type", type.color);
+  el.style.setProperty("--type-light", type.light);
+  const years = age(d.birth_date, d.death_date);
+  const born = [d.birth_place, formatDate(d.birth_date)].filter(Boolean).join(", ");
+  const died = [d.death_place, formatDate(d.death_date)].filter(Boolean).join(", ");
+  const moves = (d.occupations || []).slice(0, 4).map((occ) => {
+    const h = hash(occ);
+    const pips = '<span class="pip"></span>'.repeat(1 + (h % 3));
+    return `<div class="move"><span class="pips" aria-hidden="true">${pips}</span>
+      <span class="move-name">${esc(occ)}</span><span class="move-dmg">${10 * (2 + (h % 14))}</span></div>`;
+  }).join("");
+  const types = (d.nationality || []).map((n) =>
+    `<span class="type-chip">${FLAGS[n.toLowerCase()] ? FLAGS[n.toLowerCase()] + " " : ""}${esc(n)}</span>`).join("");
+  const name = d.name || "Unknown";
+
+  el.innerHTML = `
+    <div class="card-inner">
+      <div class="card-top">
+        <h3 class="card-name">${esc(name)}</h3>
+        ${years !== null ? `<span class="card-lv"><small>${d.death_date ? "AGE" : "NOW"}</small>${years}</span>` : ""}
+      </div>
+      <div class="card-art">
+        <span class="monogram" aria-hidden="true">${esc(initials(name))}</span>
+        <div class="card-types">${types}</div>
+      </div>
+      <div class="card-strip">
+        <div>${born ? `Born in ${esc(born)}` : "Birth not in the text"}</div>
+        ${died ? `<div>Died in ${esc(died)}</div>` : ""}
+      </div>
+      <div class="moves">${moves || '<p class="no-moves">No occupation found in the text.</p>'}</div>
+      <div class="card-stats">
+        <div>Type<b>${esc(type.name)}</b></div>
+        <div>Speed<b>${result.ms} ms</b></div>
+        <div>Found<b>${fieldsFound(d)} of 7</b></div>
+      </div>
+      <div class="card-flavor">${esc(firstSentence(text))}</div>
+    </div>
+    <div class="foil"></div>`;
+  loadPortrait(el.querySelector(".card-art"), d.name);
+}
+
+async function loadPortrait(art, name) {
+  if (!name) return;
+  try {
+    const url = `https://pt.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name.replace(/ /g, "_"))}`;
+    const res = await fetch(url);
+    if (!res.ok) return;
+    const src = (await res.json()).thumbnail?.source;
+    if (!src) return;
+    const img = new Image();
+    img.alt = `Portrait of ${name}`;
+    img.onload = () => art.prepend(img);
+    img.src = src;
+  } catch { /* no portrait: the monogram stays */ }
+}
+
+function addTilt(wrap) {
+  if (reduceMotion) return;
+  const card = wrap.querySelector(".card");
+  wrap.addEventListener("pointermove", (e) => {
+    if (wrap.classList.contains("face-down")) return;
+    const r = wrap.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+    wrap.classList.add("tilting");
+    wrap.style.transition = "transform .08s";
+    wrap.style.transform = `rotateY(${(x - .5) * 16}deg) rotateX(${(.5 - y) * 16}deg)`;
+    card.style.setProperty("--mx", `${x * 100}%`);
+    card.style.setProperty("--my", `${y * 100}%`);
+    card.style.setProperty("--fx", `${x * 100}%`);
+    card.style.setProperty("--fy", `${y * 100}%`);
+  });
+  wrap.addEventListener("pointerleave", () => {
+    wrap.classList.remove("tilting");
+    wrap.style.transition = "";
+    wrap.style.transform = "";
+  });
+}
+
+// ---------- highlighted text ----------
+const readings = [];
+function showReading(i) {
+  const { text, spans } = readings[i];
+  let html = "", pos = 0;
+  for (const s of [...spans].sort((a, b) => a.start - b.start)) {
+    if (s.start < pos) continue;
+    html += esc(text.slice(pos, s.start));
+    html += `<mark class="tag-${esc(s.label)}" title="${esc(TAGS[s.label] || s.label)}">${esc(text.slice(s.start, s.end))}</mark>`;
+    pos = s.end;
+  }
+  $("reading-text").innerHTML = html + esc(text.slice(pos));
+  [...$("reading-tabs").children].forEach((b, j) => b.setAttribute("aria-pressed", String(i === j)));
+}
+
+function addReading(model, text, spans) {
+  readings.push({ text, spans });
+  const i = readings.length - 1;
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "chip";
+  b.textContent = `${model.name}, ${model.note}`;
+  b.addEventListener("click", () => showReading(i));
+  $("reading-tabs").append(b);
+  $("reading").hidden = false;
+  if (i === 0) showReading(0);
+}
+
+$("legend").innerHTML = Object.entries(TAGS)
+  .map(([tag, label]) => `<span><i class="tag-${tag}"></i>${label}</span>`).join("");
+
+// ---------- calling the API ----------
+async function extract(base, model, text, onWait) {
+  const attempts = 9; // a cold start of the full-precision model can take about a minute
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    let res;
+    try {
+      res = await fetch(base + model.path, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+    } catch {
+      res = null; // network or CORS failure, often a cold start timing out
+    }
+    if (res?.ok) return res.json();
+    const retry = !res || [502, 503, 504].includes(res.status);
+    if (!retry) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || body.message || `The API answered ${res.status}.`);
+    }
+    if (attempt === attempts) break;
+    onWait(`Waking the model up, try ${attempt + 1} of ${attempts}…`);
+    await sleep(8000);
+  }
+  throw new Error("The model did not answer. It may still be starting: deal again in a minute.");
+}
+
+$("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const text = $("text").value.trim();
+  const base = $("api").value.trim().replace(/\/+$/, "");
+  const chosen = MODELS.filter((m) => $("models").querySelector(`input[value="${m.id}"]`).checked);
+  $("form-error").textContent = "";
+
+  if (!text) { $("form-error").textContent = "Paste a biography first, or pick one of the examples."; return; }
+  if (!base) { $("form-error").textContent = "Add the API address below first."; $("settings").open = true; $("api").focus(); return; }
+  if (!chosen.length) { $("form-error").textContent = "Pick at least one model."; return; }
+  store("bio-cards-api", base);
+
+  $("deal").disabled = true;
+  $("hand").innerHTML = "";
+  $("reading").hidden = true;
+  $("reading-tabs").innerHTML = "";
+  readings.length = 0;
+
+  await Promise.all(chosen.map(async (model) => {
+    const slot = slotFor(model);
+    $("hand").append(slot);
+    const wrap = slot.querySelector(".card-wrap");
+    const back = slot.querySelector(".card-back");
+    try {
+      const result = await extract(base, model, text, (msg) => { back.querySelector("p").textContent = msg; });
+      renderFront(slot.querySelector(".card"), result.data, text, result, model);
+      addTilt(wrap);
+      requestAnimationFrame(() => wrap.classList.remove("face-down"));
+      addReading(model, text, result.spans || []);
+    } catch (err) {
+      back.classList.add("error");
+      back.querySelector("p").textContent = err.message;
+    }
+  }));
+  $("deal").disabled = false;
+});
+</script>
+</body>
+</html>

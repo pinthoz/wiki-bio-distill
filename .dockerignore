@@ -1,0 +1,9 @@
+# The build context is the repo root (app_bert/app.py needs common.py and bert_data.py):
+# send only what the image uses, not .venv, data/ or the training runs
+*
+!common.py
+!bert_data.py
+!app_bert/app.py
+!app_bert/requirements.txt
+!app_bert/model/tokenizer.json
+!app_bert/model/lemma_map.json
