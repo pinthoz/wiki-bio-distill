@@ -1,6 +1,6 @@
 """QLoRA fine-tuning of the student, as a script for an EC2 GPU instance.
 
-The same training as notebook/train.ipynb (cell 3). Checkpoints are copied to S3 after every
+The same training as notebook/02_train_student.ipynb (cell 3). Checkpoints are copied to S3 after every
 save, so a Spot interruption only loses the steps since the last one: run it again on a new
 instance and it resumes.
 

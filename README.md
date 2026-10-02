@@ -22,7 +22,7 @@ José Saramago (Azinhaga, 16 de novembro de 1922 — Tías, 18 de junho de 2010)
 1. **Collect** (`collect.py`): about 3000 biography introductions from the Portuguese Wikipedia dump on Hugging Face (`wikimedia/wikipedia`, `20231101.pt`), kept by a regex that requires a "Place, date" parenthesis and rejects events.
 2. **Label with the teacher** (`label_local.py`, `notebook/01_label_teacher.ipynb`): Qwen2.5-7B-Instruct in 4 bits on a Colab T4, prompted with the schema from `common.py`. Outputs that don't validate against the schema are kept as errors and left out of training (7 of 3000, 0.23%).
 3. **Gold set and split** (`review.py`, `split.py`): 150 examples for the test set, 150 for validation, 2693 for training. Test examples never enter training.
-4. **Student 1, generative** (`notebook/train.ipynb`, `train_qlora.py`): Qwen2.5-1.5B-Instruct with QLoRA (4-bit NF4 base, LoRA r=16 on all linear layers), 2 epochs. It gets a one-line prompt: the rules live in the weights.
+4. **Student 1, generative** (`notebook/02_train_student.ipynb`, `train_qlora.py`): Qwen2.5-1.5B-Instruct with QLoRA (4-bit NF4 base, LoRA r=16 on all linear layers), 2 epochs. It gets a one-line prompt: the rules live in the weights.
 5. **Student 2, token classifier** (`bert_data.py`, `bert_train.py`): BERTimbau (`neuralmind/bert-base-portuguese-cased`). The teacher's JSON is aligned back to spans in the text (88% of training examples align fully; the rest are left out), the model tags tokens with BIO labels, and code rebuilds the JSON (dates to ISO, feminine and plural forms to the lemma).
 6. **Evaluate** (`evaluate.py`): precision, recall and F1 per field against the gold set, with values compared as normalized sets. A hallucinated value counts as a false positive.
 7. **Export and serve**: the BERT goes to ONNX (fp32, and int8 weight-only) and runs on Lambda behind API Gateway; the Qwen student goes to GGUF Q4_K_M for llama.cpp.
@@ -98,7 +98,7 @@ Ten requests per route from a laptop in Portugal to `eu-west-1`, through API Gat
 | `gen.py`, `evaluate.py`, `eval_gguf.py` | Batched generation with timing; comparison table against the gold set; the GGUF student on CPU |
 | `train_qlora.py` | QLoRA training as a script, with checkpoints synced to S3 (for EC2 Spot) |
 | `bert_data.py`, `bert_train.py` | JSON ↔ spans alignment; BERT training, evaluation and ONNX export |
-| `notebook/` | Colab notebooks: `01_label_teacher` (teacher, gold set, split), `train` (baseline, QLoRA, evaluation, GGUF) |
+| `notebook/` | Colab notebooks, in order: `01_label_teacher` (teacher, gold set, split), `02_train_student` (baseline, QLoRA, evaluation, GGUF), `03_bert_student` (runs `bert_train.py`) |
 | `app_bert/` | Lambda handler, Dockerfile and the EC2 HTTP server |
 | `frontend/` | The card page and its deploy script |
 | `infra/` | Terraform: data bucket, Lambdas, API Gateway and authorizer, CloudFront site, optional EC2 server and GPU training instance |
@@ -106,8 +106,8 @@ Ten requests per route from a laptop in Portugal to `eu-west-1`, through API Gat
 ## Running it
 
 - **Data and labels:** `notebook/01_label_teacher.ipynb` on a Colab T4. It reads AWS credentials from Colab Secrets, or asks for them when run from VS Code.
-- **Qwen student:** `notebook/train.ipynb` on a Colab T4. Every result is copied to Drive and S3 as soon as it exists, and the cells skip finished work after a disconnect.
-- **BERT student:** `python bert_train.py` on any CUDA GPU (an RTX 2060 with 6 GB is enough); `--export-only` redoes the ONNX export.
+- **Qwen student:** `notebook/02_train_student.ipynb` on a Colab T4. Every result is copied to Drive and S3 as soon as it exists, and the cells skip finished work after a disconnect.
+- **BERT student:** `python bert_train.py` on any CUDA GPU (an RTX 2060 with 6 GB is enough), or `notebook/03_bert_student.ipynb` on a Colab T4. `--fresh` retrains from scratch; `--export-only` redoes the ONNX export.
 - **Infrastructure:** `terraform -chdir=infra apply -var bert_image_tag=<tag>`, then `bash frontend/deploy.sh`. `terraform output -raw api_key` prints the key the page asks for.
 
 ## Data license

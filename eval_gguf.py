@@ -1,6 +1,6 @@
 """Predictions of the quantized Qwen student (GGUF) on the test set, on CPU with llama.cpp.
 
-The same as the last cell of notebook/train.ipynb, for running on a laptop. The JSON grammar
+The same as the last cell of notebook/02_train_student.ipynb, for running on a laptop. The JSON grammar
 from the schema forces valid JSON, as in production.
 
 Usage:
